@@ -1,0 +1,38 @@
+﻿
+D:\01_College\club\standards writing\webapp\src\Admin.jsx
+  29:9  error  Error: Cannot access variable before it is declared
+
+`fetchSubmissions` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  27 |
+  28 |     useEffect(() => {
+> 29 |         fetchSubmissions();
+     |         ^^^^^^^^^^^^^^^^ `fetchSubmissions` accessed before it is declared
+  30 |     }, []);
+  31 |
+  32 |     async function fetchSubmissions() {
+
+  30 |     }, []);
+  31 |
+> 32 |     async function fetchSubmissions() {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 33 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 34 |         const { data, error } = await supabase
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 44 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 45 |     }
+     | ^^^^^^ `fetchSubmissions` is declared here
+  46 |
+  47 |     async function toggleReviewed(id, current) {
+  48 |         const { error } = await supabase  react-hooks/immutability
+
+D:\01_College\club\standards writing\webapp\src\App.jsx
+    2:10  error    'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                   no-unused-vars
+    7:40  error    'useNavigate' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                              no-unused-vars
+  106:6   warning  React Hook useEffect has missing dependencies: 'lines.length' and 'onDone'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+✖ 4 problems (3 errors, 1 warning)
+

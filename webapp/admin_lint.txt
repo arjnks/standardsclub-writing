@@ -1,0 +1,33 @@
+﻿
+D:\01_College\club\standards writing\webapp\src\Admin.jsx
+  29:9  error  Error: Cannot access variable before it is declared
+
+`fetchSubmissions` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  27 |
+  28 |     useEffect(() => {
+> 29 |         fetchSubmissions();
+     |         ^^^^^^^^^^^^^^^^ `fetchSubmissions` accessed before it is declared
+  30 |     }, []);
+  31 |
+  32 |     async function fetchSubmissions() {
+
+  30 |     }, []);
+  31 |
+> 32 |     async function fetchSubmissions() {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 33 |         setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 34 |         const { data, error } = await supabase
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 44 |         setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 45 |     }
+     | ^^^^^^ `fetchSubmissions` is declared here
+  46 |
+  47 |     async function toggleReviewed(id, current) {
+  48 |         const { error } = await supabase  react-hooks/immutability
+
+✖ 1 problem (1 error, 0 warnings)
+
