@@ -5,6 +5,10 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
+if (!GEMINI_API_KEY) console.error("MISSING: GEMINI_API_KEY")
+if (!SUPABASE_URL) console.error("MISSING: SUPABASE_URL")
+if (!SUPABASE_SERVICE_ROLE_KEY) console.error("MISSING: SUPABASE_SERVICE_ROLE_KEY")
+
 const RUBRIC = `
 1. Document Structure (3 marks): Presence/order of Title, Foreword, Scope, Definitions, Requirements, Testing.
 2. Clarity of Scope & Definitions (2 marks): Clear explanation of standard application and term precision.
@@ -14,7 +18,15 @@ const RUBRIC = `
 Total: 10 marks.
 `
 
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 serve(async (req) => {
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders })
+    }
     try {
         const { submissionId } = await req.json()
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -64,7 +76,26 @@ serve(async (req) => {
         })
 
         const result = await response.json()
-        const aiOutput = JSON.parse(result.candidates[0].content.parts[0].text)
+        if (!result.candidates || result.candidates.length === 0) {
+            console.error("Gemini Error:", result)
+            throw new Error(`AI failed to generate content: ${JSON.stringify(result.error || result)}`)
+        }
+
+        let text = result.candidates[0].content.parts[0].text
+        // Remove markdown code blocks if present
+        text = text.replace(/```json\n?/, '').replace(/```/, '').trim()
+
+        let aiOutput;
+        try {
+            aiOutput = JSON.parse(text)
+        } catch (e) {
+            console.error("Parse Error. Text was:", text)
+            throw new Error("AI returned invalid JSON. Please try again.")
+        }
+
+        if (typeof aiOutput.totalScore !== 'number') {
+            throw new Error("AI response missing totalScore or invalid format.")
+        }
 
         // 5. Save results back to DB
         await supabase
@@ -76,8 +107,13 @@ serve(async (req) => {
             })
             .eq('id', submissionId)
 
-        return new Response(JSON.stringify(aiOutput), { headers: { 'Content-Type': 'application/json' } })
+        return new Response(JSON.stringify(aiOutput), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
     } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 })
+        return new Response(JSON.stringify({ error: err.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
     }
 })

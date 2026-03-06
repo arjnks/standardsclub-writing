@@ -85,13 +85,20 @@ export default function AdminPanel() {
                 body: { submissionId: s.id }
             });
 
-            if (functionErr) throw new Error(functionErr.message);
+            if (functionErr) {
+                // functionErr for Edge Functions is an object.
+                // If it's a 500, the body might be in the error object itself.
+                console.error("Function Error Object:", functionErr);
+                throw new Error(functionErr.message || "Request failed with status 500");
+            }
+
+            if (data?.error) throw new Error(data.error);
 
             alert(`--- AI EVALUATION COMPLETE ---\nSCORE: ${data.totalScore}/10.0\n\nFEEDBACK:\n${data.feedback}`);
             fetchSubmissions(); // Reload to show the new score
         } catch (err) {
             console.error(err);
-            alert("AI Evaluation failed: Make sure your Supabase Edge Function is deployed and Google Gemini key is set.");
+            alert(`AI Evaluation failed: ${err.message}`);
         } finally {
             setEvaluating(null);
         }
