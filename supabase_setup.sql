@@ -8,7 +8,10 @@ create table if not exists submissions (
   file_name text not null,
   file_type text not null check (file_type in ('pdf', 'docx')),
   submitted_at timestamptz not null default now(),
-  reviewed boolean not null default false
+  reviewed boolean not null default false,
+  name text,
+  ai_score float8,
+  ai_feedback text
 );
 
 -- 2. Row Level Security

@@ -465,51 +465,64 @@ function Theme() {
   );
 }
 
-// ─── RULES SECTION ────────────────────────────────────────────────────────────
+// ─── RULES ────────────────────────────────────────────────────────────────────
 function Rules() {
+  const rubric = [
+    { title: "Document Structure", marks: 3, desc: "Presence and order of Title, Foreword, Scope, Definitions, Requirements, Testing, etc." },
+    { title: "Scope & Definitions", marks: 2, desc: "Clarity of what the standard applies to and precision of terms defined." },
+    { title: "Technical Requirements", marks: 3, desc: "Clear, measurable, and realistic specifications (e.g. tolerances, minimum strength)." },
+    { title: "Testing Method", marks: 1, desc: "Explanation of how to verify if the standard requirements are met." },
+    { title: "Formatting", marks: 1, desc: "Professional presentation, proper headings, numbering, and alignment." },
+  ];
+
   return (
     <section id="rules" className="py-24 bg-black border-t border-white/5">
       <div className="max-w-6xl mx-auto px-6">
-        <SectionHeader index="04" label="PARTICIPATION" title="Rules & Regulations" />
+        <SectionHeader index="04" label="GUIDELINES" title="Rules & Rubric" />
         <div className="grid md:grid-cols-2 gap-12">
-          <div className="space-y-px">
-            {RULES.map((rule, i) => (
-              <motion.div
-                key={rule.code}
-                initial={{ opacity: 0, x: -16 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.5 }}
-                className="flex gap-4 p-4 border border-white/5 bg-white/[0.015] hover:bg-white/[0.03] transition-colors group"
-              >
-                <span className="font-mono text-[10px] text-yellow-400/50 shrink-0 mt-0.5">{rule.code}</span>
-                <span className="text-white/60 text-sm leading-relaxed group-hover:text-white/80 transition-colors">{rule.text}</span>
-              </motion.div>
-            ))}
-          </div>
-
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="space-y-6"
           >
-            <div className="border border-white/10 p-6 bg-white/[0.02]">
-              <div className="font-mono text-[10px] text-yellow-400/60 tracking-widest mb-4">GENERAL JUDGING CRITERIA</div>
-              <div className="space-y-3">
-                {["Creativity and relevance to theme", "Teamwork and coordination", "Effective time management", "Presentation quality"].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 text-sm text-white/50">
-                    <span className="font-mono text-yellow-400/40 text-xs mt-0.5">{String(i + 1).padStart(2, "0")}.</span>
-                    {item}
-                  </div>
-                ))}
-              </div>
+            <div className="space-y-6">
+              {[
+                { t: "TEAM SIZE", d: "Maximum of 2 members per team. Solo entries are permitted." },
+                { t: "ORIGINALITY", d: "Content must be original. Plagiarism leads to immediate disqualification." },
+                { t: "SUBMISSION", d: "Final document must be uploaded in PDF or DOCX format only." },
+                { t: "JUDGING", d: "AI-assisted scoring followed by final review by the BIS Standards Club panel." },
+              ].map((rule) => (
+                <div key={rule.t}>
+                  <h4 className="font-mono text-[10px] text-yellow-400/60 tracking-widest mb-1.5">{rule.t}</h4>
+                  <p className="text-white/40 text-xs leading-relaxed uppercase tracking-tighter">{rule.d}</p>
+                </div>
+              ))}
             </div>
-            <div className="border border-yellow-400/20 bg-yellow-400/5 p-6">
-              <div className="font-mono text-[10px] text-yellow-400 tracking-widest mb-2">EXPECTED PARTICIPANTS</div>
-              <div className="text-5xl font-black text-yellow-400">100</div>
-              <div className="font-mono text-xs text-white/30 mt-1">REGISTERED PARTICIPANTS // MAX CAP</div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.15, duration: 0.6 }}
+            className="border border-white/10 bg-white/[0.02] p-8"
+          >
+            <div className="font-mono text-[10px] text-white/30 tracking-widest mb-6">JUDGING RUBRIC (10 MARKS)</div>
+            <div className="space-y-4">
+              {rubric.map((item) => (
+                <div key={item.title} className="flex justify-between items-start border-b border-white/5 pb-4">
+                  <div>
+                    <h5 className="font-mono text-xs text-white/80 uppercase">{item.title}</h5>
+                    <p className="text-[10px] text-white/30 lowercase mt-1 font-mono">{item.desc}</p>
+                  </div>
+                  <div className="font-mono text-sm text-yellow-400">/{item.marks}M</div>
+                </div>
+              ))}
+              <div className="flex justify-between items-center pt-2">
+                <span className="font-mono text-xs text-white/50">TOTAL WEIGHTAGE</span>
+                <span className="font-mono text-lg text-yellow-400">10Marks</span>
+              </div>
             </div>
           </motion.div>
         </div>

@@ -72,26 +72,29 @@ export default function AdminPanel() {
         }
     };
 
-    const simulateAIEvaluation = async (s) => {
+    const handleAIEvaluation = async (s) => {
+        if (s.ai_score !== null && s.ai_score !== undefined) {
+            alert(`--- EXISTING AI EVALUATION REPORT ---\nTARGET: ${s.reg_no}\nNAME: ${s.name || 'N/A'}\n\nSCORE: ${s.ai_score}/10.0\n\nFEEDBACK:\n${s.ai_feedback}`);
+            return;
+        }
+
         setEvaluating(s.id);
-        // Simulate delay showing "evaluating..."
-        await new Promise(r => setTimeout(r, 2000));
 
-        // Base a deterministic score off the roll number
-        const scoreBase = s.reg_no.charCodeAt(s.reg_no.length - 1) % 4; // 0, 1, 2, 3
-        const scores = [8.5, 9.2, 7.8, 8.9];
-        const feedbacks = [
-            "Good structure, lacks depth in technical definitions.",
-            "Excellent adherence to BIS conventions. Very clear language.",
-            "Formatting needs work. Flow is decent.",
-            "Creative product choice. Minor ambiguity in scope."
-        ];
+        try {
+            const { data, error: functionErr } = await supabase.functions.invoke('evaluate_submission', {
+                body: { submissionId: s.id }
+            });
 
-        const finalScore = scores[scoreBase];
-        const finalFeed = feedbacks[scoreBase];
+            if (functionErr) throw new Error(functionErr.message);
 
-        alert(`--- AI EVALUATION REPORT ---\nTarget: ${s.reg_no}\nFile: ${s.file_name}\n\nSCORE: ${finalScore}/10.0\n\nFEEDBACK:\n${finalFeed}`);
-        setEvaluating(null);
+            alert(`--- AI EVALUATION COMPLETE ---\nSCORE: ${data.totalScore}/10.0\n\nFEEDBACK:\n${data.feedback}`);
+            fetchSubmissions(); // Reload to show the new score
+        } catch (err) {
+            console.error(err);
+            alert("AI Evaluation failed: Make sure your Supabase Edge Function is deployed and Google Gemini key is set.");
+        } finally {
+            setEvaluating(null);
+        }
     };
 
     async function toggleReviewed(id, current) {
@@ -291,7 +294,7 @@ export default function AdminPanel() {
                         <div className="min-w-[800px]">
                             {/* Table header */}
                             <div className="grid grid-cols-12 gap-4 px-4 py-2 border-b border-white/5 bg-white/[0.02]">
-                                {["#", "REG NO", "FILE", "SUBMITTED AT", "STATUS", "ACTIONS"].map(
+                                {["#", "NAME", "REG NO", "FILE", "SUBMITTED AT", "STATUS", "ACTIONS"].map(
                                     (h, i) => (
                                         <div
                                             key={h}
@@ -300,12 +303,14 @@ export default function AdminPanel() {
                                                 : i === 1
                                                     ? "col-span-2"
                                                     : i === 2
-                                                        ? "col-span-3"
+                                                        ? "col-span-1.5"
                                                         : i === 3
-                                                            ? "col-span-3"
+                                                            ? "col-span-2"
                                                             : i === 4
-                                                                ? "col-span-1"
-                                                                : "col-span-2"
+                                                                ? "col-span-2"
+                                                                : i === 5
+                                                                    ? "col-span-1"
+                                                                    : "col-span-2.5 text-right"
                                                 }`}
                                         >
                                             {h}
@@ -322,16 +327,24 @@ export default function AdminPanel() {
                                     <div className="col-span-1 font-mono text-[10px] text-white/20">
                                         {String(i + 1).padStart(3, "0")}
                                     </div>
-                                    <div className="col-span-2 font-mono text-xs text-yellow-400">
-                                        {s.reg_no}
+                                    <div className="col-span-2 font-mono text-xs text-white/80 truncate">
+                                        {s.name || "---"}
                                     </div>
-                                    <div className="col-span-3 text-xs text-white/60 truncate">
+                                    <div className="col-span-1.5 font-mono text-xs text-yellow-400 flex items-center gap-2">
+                                        {s.reg_no}
+                                        {s.ai_score !== null && s.ai_score !== undefined && (
+                                            <span className="bg-yellow-400 text-black px-1 text-[9px] font-bold">
+                                                {s.ai_score}/10
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="col-span-2 text-xs text-white/60 truncate">
                                         {s.file_name}
                                         <span className="ml-2 font-mono text-[10px] text-white/25 uppercase">
                                             .{s.file_type}
                                         </span>
                                     </div>
-                                    <div className="col-span-3 font-mono text-[10px] text-white/30">
+                                    <div className="col-span-2 font-mono text-[10px] text-white/30">
                                         {new Date(s.submitted_at).toLocaleString("en-IN", {
                                             day: "2-digit",
                                             month: "short",
@@ -342,7 +355,7 @@ export default function AdminPanel() {
                                     <div className="col-span-1">
                                         <StatusBadge reviewed={s.reviewed} />
                                     </div>
-                                    <div className="col-span-2 flex gap-1">
+                                    <div className="col-span-2.5 flex justify-end gap-1">
                                         <button
                                             onClick={() => downloadFile(s.file_path, s.file_name, s.file_type, s.reg_no)}
                                             className="font-mono text-[10px] tracking-widest text-white/40 hover:text-yellow-400 transition-colors border border-white/10 hover:border-yellow-400/30 px-2 py-1"
@@ -350,11 +363,11 @@ export default function AdminPanel() {
                                             ↓ DL
                                         </button>
                                         <button
-                                            onClick={() => simulateAIEvaluation(s)}
+                                            onClick={() => handleAIEvaluation(s)}
                                             disabled={evaluating === s.id}
                                             className="font-mono text-[10px] tracking-widest text-yellow-400/80 hover:text-yellow-400 transition-colors border border-yellow-400/30 hover:bg-yellow-400/10 px-2 py-1 disabled:opacity-50"
                                         >
-                                            {evaluating === s.id ? "EVAL..." : "AI EVAL"}
+                                            {evaluating === s.id ? "EVAL..." : (s.ai_score !== null && s.ai_score !== undefined) ? "SEE REPORT" : "AI EVAL"}
                                         </button>
                                         <button
                                             onClick={() => toggleReviewed(s.id, s.reviewed)}
