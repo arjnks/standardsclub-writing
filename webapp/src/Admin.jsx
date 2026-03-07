@@ -308,7 +308,7 @@ export default function AdminPanel() {
                                             className={`font-mono text-[10px] text-white/25 tracking-widest ${i === 0
                                                 ? "col-span-1"
                                                 : i === 1
-                                                    ? "col-span-2"
+                                                    ? "col-span-1.5"
                                                     : i === 2
                                                         ? "col-span-1.5"
                                                         : i === 3
@@ -316,7 +316,7 @@ export default function AdminPanel() {
                                                             : i === 4
                                                                 ? "col-span-2"
                                                                 : i === 5
-                                                                    ? "col-span-1"
+                                                                    ? "col-span-1.5"
                                                                     : "col-span-2.5 text-right"
                                                 }`}
                                         >
@@ -334,7 +334,7 @@ export default function AdminPanel() {
                                     <div className="col-span-1 font-mono text-[10px] text-white/20">
                                         {String(i + 1).padStart(3, "0")}
                                     </div>
-                                    <div className="col-span-2 font-mono text-xs text-white/80 truncate">
+                                    <div className="col-span-1.5 font-mono text-xs text-white/80 truncate">
                                         {s.name || "---"}
                                     </div>
                                     <div className="col-span-1.5 font-mono text-xs text-yellow-400 flex items-center gap-2">
@@ -359,7 +359,7 @@ export default function AdminPanel() {
                                             minute: "2-digit",
                                         })}
                                     </div>
-                                    <div className="col-span-1">
+                                    <div className="col-span-1.5">
                                         <StatusBadge reviewed={s.reviewed} />
                                     </div>
                                     <div className="col-span-2.5 flex justify-end gap-1">
