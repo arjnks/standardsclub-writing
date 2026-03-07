@@ -76,7 +76,7 @@ serve(async (req) => {
                     ]
                 }],
                 generationConfig: {
-                    responseMimeType: "application/json"
+                    response_mime_type: "application/json"
                 }
             })
         })

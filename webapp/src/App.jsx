@@ -305,7 +305,7 @@ function Hero() {
           {[
             { label: "DATE", value: "09 MAR 2026" },
             { label: "VENUE", value: "ANNA AUD." },
-            { label: "TIME", value: "14:00–16:00" },
+            { label: "TIME", value: "14:00–15:00" },
           ].map((item) => (
             <div key={item.label} className="bg-white/[0.02] px-4 py-3">
               <div className="font-mono text-[10px] text-white/30 tracking-widest mb-1">{item.label}</div>
