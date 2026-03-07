@@ -308,16 +308,16 @@ export default function AdminPanel() {
                                             className={`font-mono text-[10px] text-white/25 tracking-widest ${i === 0
                                                 ? "col-span-1"
                                                 : i === 1
-                                                    ? "col-span-1.5"
+                                                    ? "col-span-1"
                                                     : i === 2
-                                                        ? "col-span-1.5"
+                                                        ? "col-span-1"
                                                         : i === 3
                                                             ? "col-span-2"
                                                             : i === 4
                                                                 ? "col-span-2"
                                                                 : i === 5
-                                                                    ? "col-span-1.5"
-                                                                    : "col-span-2.5 text-right"
+                                                                    ? "col-span-2"
+                                                                    : "col-span-3 text-right"
                                                 }`}
                                         >
                                             {h}
@@ -334,10 +334,10 @@ export default function AdminPanel() {
                                     <div className="col-span-1 font-mono text-[10px] text-white/20">
                                         {String(i + 1).padStart(3, "0")}
                                     </div>
-                                    <div className="col-span-1.5 font-mono text-xs text-white/80 truncate">
+                                    <div className="col-span-1 font-mono text-xs text-white/80 truncate">
                                         {s.name || "---"}
                                     </div>
-                                    <div className="col-span-1.5 font-mono text-xs text-yellow-400 flex items-center gap-2">
+                                    <div className="col-span-1 font-mono text-xs text-yellow-400 flex items-center gap-2">
                                         {s.reg_no}
                                         {s.ai_score !== null && s.ai_score !== undefined && (
                                             <span className="bg-yellow-400 text-black px-1 text-[9px] font-bold">
@@ -359,10 +359,10 @@ export default function AdminPanel() {
                                             minute: "2-digit",
                                         })}
                                     </div>
-                                    <div className="col-span-1.5">
+                                    <div className="col-span-2">
                                         <StatusBadge reviewed={s.reviewed} />
                                     </div>
-                                    <div className="col-span-2.5 flex justify-end gap-1">
+                                    <div className="col-span-3 flex justify-end gap-1">
                                         <button
                                             onClick={() => downloadFile(s.file_path, s.file_name, s.file_type, s.reg_no)}
                                             className="font-mono text-[10px] tracking-widest text-white/40 hover:text-yellow-400 transition-colors border border-white/10 hover:border-yellow-400/30 px-2 py-1"
