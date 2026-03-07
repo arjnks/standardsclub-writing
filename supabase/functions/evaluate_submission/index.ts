@@ -75,9 +75,7 @@ serve(async (req) => {
                         }
                     ]
                 }],
-                generationConfig: {
-                    response_mime_type: "application/json"
-                }
+                // Removed generationConfig to avoid parameter naming issues with REST API versions
             })
         })
 
