@@ -54,47 +54,79 @@ serve(async (req) => {
         }
         const base64Content = btoa(binary);
 
-        // 4. Call Gemini
+        // 4. Call Gemini with fallback logic
         const prompt = `You are an expert auditor for the Bureau of Indian Standards (BIS). 
         Grade this document according to this rubric out of 10 marks: ${RUBRIC}.
         Respond with a JSON object containing "totalScore" (number) and "feedback" (string).
         Ensure the response is valid JSON.`
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [
-                        { text: prompt },
-                        {
-                            inline_data: {
-                                mime_type: submission.file_type === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                data: base64Content
-                            }
-                        }
-                    ]
-                }],
-                // Removed generationConfig to avoid parameter naming issues with REST API versions
-            })
-        })
+        const modelsToTry = [
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-pro"
+        ]
 
-        const result = await response.json()
-        if (!result.candidates || result.candidates.length === 0) {
-            throw new Error(`Gemini API Error: ${JSON.stringify(result.error || result)}`)
+        let result = null;
+        let lastError = null;
+
+        for (const model of modelsToTry) {
+            try {
+                console.log(`Trying model: ${model}`)
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inline_data: {
+                                        mime_type: submission.file_type === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                        data: base64Content
+                                    }
+                                }
+                            ]
+                        }]
+                    })
+                })
+
+                const json = await response.json()
+                if (json.candidates && json.candidates.length > 0) {
+                    result = json
+                    break
+                } else {
+                    lastError = json.error || json
+                    console.error(`Model ${model} failed:`, lastError)
+                }
+            } catch (e) {
+                lastError = e
+                console.error(`Fetch error for ${model}:`, e)
+            }
+        }
+
+        if (!result) {
+            throw new Error(`All Gemini models failed. Last error: ${JSON.stringify(lastError)}`)
         }
 
         let text = result.candidates[0].content.parts[0].text
-        // Clean markdown backticks if they appear despite JSON mode
+        // Clean markdown backticks if they appear
         text = text.replace(/```json\n?/, '').replace(/```/, '').trim()
 
         let aiOutput;
         try {
             aiOutput = JSON.parse(text)
         } catch (e) {
-            console.error("Parse error, raw text:", text)
-            // Fallback: try to extract something that looks like JSON or just fail
-            throw new Error(`Invalid JSON from AI: ${text.substring(0, 100)}...`)
+            // Very basic extraction if JSON parsing fails
+            const scoreMatch = text.match(/"totalScore":\s*(\d+(\.\d+)?)/)
+            const feedbackMatch = text.match(/"feedback":\s*"([^"]+)"/)
+            if (scoreMatch) {
+                aiOutput = {
+                    totalScore: parseFloat(scoreMatch[1]),
+                    feedback: feedbackMatch ? feedbackMatch[1] : text.substring(0, 200)
+                }
+            } else {
+                throw new Error(`Invalid JSON from AI: ${text.substring(0, 100)}...`)
+            }
         }
 
         // 5. Update database
