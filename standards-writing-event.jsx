@@ -5,7 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
-const NAV_LINKS = ["Overview", "Schedule", "Rules", "Register"];
+const NAV_LINKS = ["Overview", "Schedule", "Rules", "Submit"];
 
 const SCHEDULE = [
     {
@@ -325,11 +325,11 @@ function Hero() {
                     className="mt-10 flex flex-wrap items-center gap-6"
                 >
                     <a
-                        href="#register"
+                        href="#submit"
                         className="group relative font-mono text-sm tracking-widest uppercase px-8 py-3 border border-yellow-400 text-yellow-400 overflow-hidden transition-colors duration-300 hover:text-black"
                     >
                         <span className="absolute inset-0 bg-yellow-400 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-                        <span className="relative">REGISTER NOW</span>
+                        <span className="relative">SUBMIT DRAFT</span>
                     </a>
                     <a href="#schedule" className="font-mono text-xs text-white/40 hover:text-white/80 transition-colors tracking-widest uppercase flex items-center gap-2">
                         VIEW SCHEDULE <span className="text-yellow-400">↓</span>
@@ -397,8 +397,8 @@ function Schedule() {
                             transition={{ delay: i * 0.1, duration: 0.5 }}
                             onClick={() => setActive(active === item.id ? null : item.id)}
                             className={`group cursor-pointer border-l-2 transition-all duration-300 ${active === item.id
-                                    ? "border-yellow-400 bg-yellow-400/5"
-                                    : "border-white/10 bg-white/[0.02] hover:border-yellow-400/40 hover:bg-white/[0.03]"
+                                ? "border-yellow-400 bg-yellow-400/5"
+                                : "border-white/10 bg-white/[0.02] hover:border-yellow-400/40 hover:bg-white/[0.03]"
                                 }`}
                         >
                             <div className="px-6 py-5 flex items-center justify-between gap-4">
@@ -571,7 +571,7 @@ function Register() {
     };
 
     return (
-        <section id="register" className="py-24 bg-black border-t border-white/5">
+        <section id="submit" className="py-24 bg-black border-t border-white/5">
             <div className="max-w-6xl mx-auto px-6">
                 <SectionHeader index="05" label="ENROLL" title="Register" />
                 <div className="grid md:grid-cols-2 gap-12 items-start">

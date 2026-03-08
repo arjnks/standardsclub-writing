@@ -285,11 +285,11 @@ function Hero() {
           className="mt-10 flex flex-wrap items-center gap-6"
         >
           <a
-            href="#register"
+            href="#submit"
             className="group relative font-mono text-sm tracking-widest uppercase px-8 py-3 border border-yellow-400 text-yellow-400 overflow-hidden transition-colors duration-300 hover:text-black"
           >
             <span className="absolute inset-0 bg-yellow-400 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-            <span className="relative">REGISTER NOW</span>
+            <span className="relative">SUBMIT DRAFT</span>
           </a>
           <a href="#schedule" className="font-mono text-xs text-white/40 hover:text-white/80 transition-colors tracking-widest uppercase flex items-center gap-2">
             VIEW SCHEDULE <span className="text-yellow-400">↓</span>
@@ -490,7 +490,7 @@ function Rules() {
               {[
                 { t: "TEAM SIZE", d: "Maximum of 2 members per team. Solo entries are permitted." },
                 { t: "ORIGINALITY", d: "Content must be original. Plagiarism leads to immediate disqualification." },
-                { t: "SUBMISSION", d: "Final document must be uploaded in PDF or DOCX format only." },
+                { t: "SUBMISSION", d: "Final document must be uploaded in PDF format only." },
                 { t: "JUDGING", d: "AI-assisted scoring followed by final review by the BIS Standards Club panel." },
               ].map((rule) => (
                 <div key={rule.t}>
@@ -534,7 +534,6 @@ function Rules() {
 // ─── REGISTER SECTION ─────────────────────────────────────────────────────────
 const ALLOWED_MIME = [
   "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
@@ -571,7 +570,7 @@ function Register() {
       return;
     }
     if (!ALLOWED_MIME.includes(file.type)) {
-      setError("Only PDF and DOCX files are accepted.");
+      setError("Only PDF files are accepted.");
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
@@ -593,7 +592,7 @@ function Register() {
         return;
       }
 
-      const ext = file.type === "application/pdf" ? "pdf" : "docx";
+      const ext = "pdf";
       const storagePath = `${reg_no}_${Date.now()}.${ext}`;
 
       const { error: storageError } = await supabase.storage
@@ -643,7 +642,7 @@ function Register() {
             </p>
             <div className="space-y-4">
               {[
-                { label: "FORMAT SPECIFICATION", value: "PDF or DOCX Only" },
+                { label: "FORMAT SPECIFICATION", value: "PDF Only" },
                 { label: "MAX FILE SIZE", value: "10 MB" },
                 { label: "AI EVALUATION", value: "Active upon submission" },
                 { label: "TEAM SIZE", value: "1 — 2 Members" },
@@ -689,10 +688,10 @@ function Register() {
                       </div>
                     ))}
                     <div>
-                      <label className="font-mono text-[10px] text-white/30 tracking-widest block mb-1.5">UPLOAD DOCUMENT (PDF/DOCX)</label>
+                      <label className="font-mono text-[10px] text-white/30 tracking-widest block mb-1.5">UPLOAD DOCUMENT (PDF ONLY)</label>
                       <input
                         type="file"
-                        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        accept=".pdf,application/pdf"
                         onChange={handleFileChange}
                         className="w-full bg-white/5 border border-white/10 text-white text-sm px-4 py-2.5 font-mono file:mr-4 file:py-1 file:px-3 file:border-0 file:text-xs file:font-mono file:bg-yellow-400/10 file:text-yellow-400 hover:file:bg-yellow-400/20 transition-colors cursor-pointer"
                       />

@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import * as unpdf from "https://esm.sh/unpdf@0.12.1"
+
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -7,12 +9,24 @@ const corsHeaders = {
 }
 
 const RUBRIC = `
-1. Document Structure (3 marks): Presence/order of Title, Foreword, Scope, Definitions, Requirements, Testing.
-2. Clarity of Scope & Definitions (2 marks): Clear explanation of standard application and term precision.
-3. Technical Requirements (3 marks): Clear, measurable, and realistic specifications.
-4. Testing / Verification Method (1 mark): Explanation of how to verify if standard is met.
-5. Formatting & Presentation (1 mark): Proper headings, numbering, and professional look.
-Total: 10 marks.
+BIS Standards Writing — Judging Rubric (Total: 10 Marks)
+
+Step 0 — Document Validity Check (Mandatory)
+A document is INVALID if:
+- Not structured like a standard (no sections/headings)
+- Pure essay/story instead of rules/specifications
+- Extremely incomplete (less than ~1 page or only a title)
+ACTION: If INVALID, assign totalScore: 0 and stop evaluation.
+
+Scoring Criteria:
+1. Structure & Format (2 Marks): Logical structure, clear headings.
+2. Scope & Clarity (1.5 Marks): Clear explanation of application.
+3. Definitions/Terminology (1.5 Marks): Technical terms defined.
+4. Tech Requirements (3 Marks): Measurable criteria and rules (MOST IMPORTANT).
+5. Testing/Compliance (1 Mark): Verification methods explained.
+6. Presentation (1 Mark): Numbering and professional look.
+
+Guidelines: Be lenient with minor formatting; focus on conceptual understanding.
 `
 
 serve(async (req) => {
@@ -21,11 +35,11 @@ serve(async (req) => {
     }
 
     try {
-        const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
+        const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')
         const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
         const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-        if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY secret is not set")
+        if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY secret is not set")
 
         const { submissionId } = await req.json()
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -40,94 +54,72 @@ serve(async (req) => {
         if (fetchErr || !submission) throw new Error('Submission not found')
 
         // 2. Download file
-        const { data: fileData, error: downloadErr } = await supabase.storage
+        const { data: fileBlob, error: downloadErr } = await supabase.storage
             .from('submissions')
             .download(submission.file_path)
 
         if (downloadErr) throw new Error(`Storage download failed: ${downloadErr.message}`)
 
-        // 3. Convert to Base64
-        const uint8Array = new Uint8Array(await fileData.arrayBuffer());
-        let binary = '';
-        for (let i = 0; i < uint8Array.byteLength; i++) {
-            binary += String.fromCharCode(uint8Array[i]);
-        }
-        const base64Content = btoa(binary);
+        // 3. Extract Text based on file type
+        let extractedText = ""
+        const arrayBuffer = await fileBlob.arrayBuffer()
 
-        // 4. Call Gemini with fallback logic
-        const prompt = `You are an expert auditor for the Bureau of Indian Standards (BIS). 
-        Grade this document according to this rubric out of 10 marks: ${RUBRIC}.
-        Respond with a JSON object containing "totalScore" (number) and "feedback" (string).
-        Ensure the response is valid JSON.`
-
-        const modelsToTry = [
-            "gemini-1.5-flash",
-            "gemini-1.5-flash-latest",
-            "gemini-pro"
-        ]
-
-        let result = null;
-        let lastError = null;
-
-        for (const model of modelsToTry) {
+        if (submission.file_type === 'pdf') {
             try {
-                console.log(`Trying model: ${model}`)
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: prompt },
-                                {
-                                    inline_data: {
-                                        mime_type: submission.file_type === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                        data: base64Content
-                                    }
-                                }
-                            ]
-                        }]
-                    })
-                })
-
-                const json = await response.json()
-                if (json.candidates && json.candidates.length > 0) {
-                    result = json
-                    break
-                } else {
-                    lastError = json.error || json
-                    console.error(`Model ${model} failed:`, lastError)
-                }
-            } catch (e) {
-                lastError = e
-                console.error(`Fetch error for ${model}:`, e)
+                // unpdf 0.12.1+ uses extractText
+                const { text } = await unpdf.extractText(arrayBuffer)
+                extractedText = (Array.isArray(text) ? text.join("\n") : text) || ""
+            } catch (err: any) {
+                console.error("PDF extraction failed:", err)
+                throw new Error(`Failed to extract text from PDF: ${err.message}`)
             }
+        } else {
+            throw new Error(`Unsupported file type: ${submission.file_type}`)
         }
 
-        if (!result) {
-            throw new Error(`All Gemini models failed. Last error: ${JSON.stringify(lastError)}`)
+        if (!extractedText || extractedText.trim().length === 0) {
+            throw new Error("Could not extract any text from the document.")
         }
 
-        let text = result.candidates[0].content.parts[0].text
-        // Clean markdown backticks if they appear
-        text = text.replace(/```json\n?/, '').replace(/```/, '').trim()
+        // 4. Call Groq
+        const prompt = `You are an expert auditor for the Bureau of Indian Standards (BIS). 
+        Grade this document according to this rubric:
+        
+        ${RUBRIC}
+        
+        DOCUMENT CONTENT:
+        """
+        ${extractedText.substring(0, 35000)}
+        """
 
-        let aiOutput;
-        try {
-            aiOutput = JSON.parse(text)
-        } catch (e) {
-            // Very basic extraction if JSON parsing fails
-            const scoreMatch = text.match(/"totalScore":\s*(\d+(\.\d+)?)/)
-            const feedbackMatch = text.match(/"feedback":\s*"([^"]+)"/)
-            if (scoreMatch) {
-                aiOutput = {
-                    totalScore: parseFloat(scoreMatch[1]),
-                    feedback: feedbackMatch ? feedbackMatch[1] : text.substring(0, 200)
-                }
-            } else {
-                throw new Error(`Invalid JSON from AI: ${text.substring(0, 100)}...`)
-            }
+        CRITICAL INSTRUCTIONS:
+        1. Perform Step 0 check. If it's an essay/story or not a standard-style document, totalScore MUST be 0.
+        2. Provide helpful feedback based on the rubric sections.
+        3. Respond ONLY with a JSON object: {"totalScore": number, "feedback": string}.`
+
+        console.log(`Calling Groq for submission: ${submissionId}`)
+
+        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.1,
+                response_format: { type: "json_object" }
+            })
+        })
+
+        if (!groqResponse.ok) {
+            const errorData = await groqResponse.text()
+            throw new Error(`Groq API error: ${errorData}`)
         }
+
+        const groqJson = await groqResponse.json()
+        const aiOutput = JSON.parse(groqJson.choices[0].message.content)
 
         // 5. Update database
         await supabase
@@ -151,3 +143,4 @@ serve(async (req) => {
         })
     }
 })
+
