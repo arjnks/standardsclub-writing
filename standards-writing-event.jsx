@@ -344,7 +344,7 @@ function Hero() {
                 >
                     {[
                         { label: "DATE", value: "09 MAR 2026" },
-                        { label: "VENUE", value: "ANNA AUD." },
+                        { label: "VENUE", value: "CS HALL" },
                         { label: "TIME", value: "14:00–16:00" },
                     ].map((item) => (
                         <div key={item.label} className="bg-white/[0.02] px-4 py-3">
@@ -587,7 +587,7 @@ function Register() {
                         <div className="space-y-4">
                             {[
                                 { label: "ORGANIZED BY", value: "BIS Standards Club, VIT Vellore" },
-                                { label: "VENUE", value: "Anna Auditorium, VIT Vellore" },
+                                { label: "VENUE", value: "CS Hall, VIT Vellore" },
                                 { label: "DATE", value: "Sunday, 09 March 2026" },
                                 { label: "TIME", value: "2:00 PM — 4:00 PM IST" },
                                 { label: "TEAM SIZE", value: "1 — 2 Members" },
